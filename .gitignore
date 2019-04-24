@@ -103,3 +103,6 @@ pyenv/
 
 # mypy
 .mypy_cache/
+
+# image files
+*.jpg
