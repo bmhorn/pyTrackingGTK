@@ -17,6 +17,7 @@ class Worker(Thread):
     def run(self):
         while self.run_command:
             #Command executed by Worker
+            self.data.pic = self.data.vs.read()
             pic = imutils.resize(self.data.pic, width=600)
             blurred = cv2.GaussianBlur(pic,(11,11),0)
             hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
@@ -37,7 +38,7 @@ class PyApp(Gtk.Window):
         #Initialize widget grid
         self.grid = Gtk.Grid()
         self.grid.set_row_spacing(5)
-        self.grid.set_column_spacing(5)
+        self.grid.set_column_spacing(2)
         self.add(self.grid)
         #Start/Stop button
         self.start_stop_button = Gtk.Button(label=("Start"))
@@ -51,6 +52,7 @@ class PyApp(Gtk.Window):
         self.slider5 = Gtk.Scale.new_with_range(Gtk.Orientation.VERTICAL,0,255,1)
         self.slider6 = Gtk.Scale.new_with_range(Gtk.Orientation.VERTICAL,0,255,1)
         self.slider7 = Gtk.Scale.new_with_range(Gtk.Orientation.VERTICAL,1,60,1)
+        self.slider8 = Gtk.Scale.new_with_range(Gtk.Orientation.VERTICAL,1,200,1)
         self.slider1.set_value(0)
         self.slider2.set_value(0)
         self.slider3.set_value(0)
@@ -58,9 +60,11 @@ class PyApp(Gtk.Window):
         self.slider5.set_value(255)
         self.slider6.set_value(255)
         self.slider7.set_value(5)
+        self.slider8.set_value(75)
         self.lower = np.array([0,0,0])
         self.upper = np.array([255,255,255])
         self.worker_freq = 5
+        self.rad = 75
         self.slider1.connect("value-changed", self.slider1_moved)
         self.slider2.connect("value-changed", self.slider2_moved)
         self.slider3.connect("value-changed", self.slider3_moved)
@@ -68,6 +72,7 @@ class PyApp(Gtk.Window):
         self.slider5.connect("value-changed", self.slider5_moved)
         self.slider6.connect("value-changed", self.slider6_moved)
         self.slider7.connect("value-changed", self.slider7_moved)
+        self.slider8.connect("value-changed", self.slider8_moved)
         self.slider1_label = Gtk.Label()
         self.slider1_label.set_label("R")
         self.slider2_label = Gtk.Label()
@@ -82,6 +87,8 @@ class PyApp(Gtk.Window):
         self.slider6_label.set_label("B")
         self.slider7_label = Gtk.Label()
         self.slider7_label.set_label("Hz")
+        self.slider8_label = Gtk.Label()
+        self.slider8_label.set_label("Rad")
         self.grid.attach(self.slider1, 4,0, 1, 30)        
         self.grid.attach(self.slider2, 5,0, 1, 30)        
         self.grid.attach(self.slider3, 6,0, 1, 30)        
@@ -89,6 +96,7 @@ class PyApp(Gtk.Window):
         self.grid.attach(self.slider5, 8,0, 1, 30)        
         self.grid.attach(self.slider6, 9,0, 1, 30)
         self.grid.attach(self.slider7, 10,0, 1, 30)
+        self.grid.attach(self.slider8, 11,0, 1, 30)
         self.grid.attach(self.slider1_label, 4,35, 1, 1)        
         self.grid.attach(self.slider2_label, 5,35, 1, 1)        
         self.grid.attach(self.slider3_label, 6,35, 1, 1)        
@@ -96,10 +104,13 @@ class PyApp(Gtk.Window):
         self.grid.attach(self.slider5_label, 8,35, 1, 1)        
         self.grid.attach(self.slider6_label, 9,35, 1, 1)        
         self.grid.attach(self.slider7_label, 10,35, 1, 1)        
+        self.grid.attach(self.slider8_label, 11,35, 1, 1)        
         #Initialize frame
         self.frame = Gtk.Frame()
         self.image = Gtk.Image.new()
-        self.pic = cv2.imread("image.jpg")
+        self.vs = VideoStream(src=0).start()
+        time.sleep(2.0)
+        self.pic = self.vs.read()
         pic = imutils.resize(self.pic, width=600)
         pic = np.array(pic).flatten()
         pixbuf = GdkPixbuf.Pixbuf.new_from_data(pic,GdkPixbuf.Colorspace.RGB, False, 8, 600, 400, 3*600)
@@ -109,8 +120,6 @@ class PyApp(Gtk.Window):
         #Initialize worker
         self.worker = Worker(self)
         self.worker.start()
-        #Different data
-        self.value = True
         #Show Window
         self.show_all()
 
@@ -166,6 +175,8 @@ class PyApp(Gtk.Window):
         self.upper[2] = slidervalue
     def slider7_moved(self, widget):
         self.worker_freq = int(self.slider7.get_value())
+    def slider8_moved(self, widget):
+        self.rad = int(self.slider8.get_value())
     #Function evaluated at window kill
     def quit_and_kill_worker(self,widget):
         self.worker.quit = True
