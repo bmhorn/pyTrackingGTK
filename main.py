@@ -21,7 +21,7 @@ class Worker(Thread):
             pic = imutils.resize(self.data.pic, width=600)
             blurred = cv2.GaussianBlur(pic,(11,11),0)
             hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-            msk = cv2.inRange(pic,self.data.lower,self.data.upper)
+            msk = cv2.inRange(hsv,self.data.lower,self.data.upper)
             msk = cv2.erode(msk, None, iterations=2)
             msk = cv2.dilate(msk, None, iterations=2)
             msk = cv2.cvtColor(msk, cv2.COLOR_GRAY2BGR)

@@ -106,3 +106,6 @@ pyenv/
 
 # image files
 *.jpg
+
+# visual studio code files
+.vscode/*
